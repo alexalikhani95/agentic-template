@@ -42,8 +42,8 @@ Then, in order:
 
 - Node (for `scripts/context-check.mjs` and its tests: `node --test 'scripts/**/*.test.mjs'`)
 - `npx prettier` available — the pre-commit hook calls it
-- Claude Code, with `mattpocock/skills` installed for the flow's five commands: `npx skills add mattpocock/skills`
-- `superpowers` and `ponytail` as user-level plugins — see `docs/agents/workflow.md` → Skills
+- Claude Code, with the whole `mattpocock/skills` set installed — it is the flow's spine: `npx skills add mattpocock/skills`
+- `ponytail` as a user-level plugin; `naive-user` once there is a UI — see `docs/agents/workflow.md` → Skills
 
 ## The one rule worth reading first
 

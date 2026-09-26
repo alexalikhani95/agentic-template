@@ -81,7 +81,7 @@ flowchart TD
 | `/grill-with-docs` | Interrogates the idea — reads `CONTEXT.md`, `PRD.md`, HLD/LLD, ADRs first, then grills the _gaps_                                                                                                                    | your intent + domain docs | understanding, in chat only        | one unbroken window, |
 | `/to-spec`         | Freezes the grilling into a contract: problem, stories, implementation + testing decisions, out-of-scope, traps                                                                                                      | the grilling              | `tickets/<feature>/spec.md`        | shared across        |
 | `/to-tickets`      | Slices the spec into vertical tracer-bullet tickets (schema → API → tests for one demoable behaviour), with `Blocked by` edges                                                                                       | `spec.md`                 | `tickets/<feature>/issues/NN-*.md` | these three          |
-| `/implement`       | Builds one ticket: dispatches an implementer subagent with ticket + spec, TDD at agreed seams, typecheck/tests as it goes                                                                                            | one ticket (+ spec)       | code + tests on a branch → PR      | fresh per ticket     |
+| `/implement`       | Builds one ticket: dispatches an implementer subagent with ticket + spec, typecheck/tests as it goes                                                                                                                 | one ticket (+ spec)       | code + tests on a branch → PR      | fresh per ticket     |
 | `/code-review`     | Grades the diff on two independent axes run as parallel subagents — **Standards** (repo conventions, code smells) and **Spec** (missing requirements, scope creep) — reported separately so one can't mask the other | diff + spec + standards   | findings, split by axis            | with the diff        |
 
 **Why the first three share one window:** the grilling lives in chat, not a file. A
@@ -91,36 +91,56 @@ flowchart TD
 needs only the spec + itself — not the noise of earlier tickets. The context hook
 (`AGENTS.md` → _Who does the work_) enforces the boundary.
 
-## Skills — which toolkit does which job
+## Skills — which one does which job
 
-Two toolkits are on this machine and both could run a feature end to end. We use
-**one spine and borrow three skills**, so there is exactly one way to write a spec.
+**One toolkit, one spine: `mattpocock/skills`.** Every step of the loop comes from there,
+plus two plugins that do jobs no skill in the set does.
 
-| Job                                 | Skill                                                                   | From                     |
-| ----------------------------------- | ----------------------------------------------------------------------- | ------------------------ |
-| Understand the idea                 | `/grill-with-docs`                                                      | mattpocock/skills        |
-| Freeze it into a spec               | `/to-spec` → `tickets/<feature>/spec.md`                                | mattpocock/skills        |
-| Slice into tickets                  | `/to-tickets` → `tickets/<feature>/issues/NN-*.md`                      | mattpocock/skills        |
-| Build one ticket                    | `/implement`, dispatching via `superpowers:subagent-driven-development` | mattpocock + superpowers |
-| Prove it works before claiming done | `superpowers:verification-before-completion`                            | superpowers              |
-| Review the diff                     | `/code-review` (standards axis + spec axis)                             | mattpocock/skills        |
-| Keep it lean                        | `ponytail` (always on), `/ponytail-review` at self-check                | ponytail                 |
-| Merge, clean up, close out          | `superpowers:finishing-a-development-branch`                            | superpowers              |
-| Try it as a stranger                | `/naive-test` (once there is a UI)                                      | naive-user plugin        |
-| Record a decision / a term          | `/domain-modeling` → `CONTEXT.md`, `docs/adr/`                          | mattpocock/skills        |
+| Job                        | Skill                                                    | From              |
+| -------------------------- | -------------------------------------------------------- | ----------------- |
+| Understand the idea        | `/grill-with-docs`                                       | mattpocock/skills |
+| Freeze it into a spec      | `/to-spec` → `tickets/<feature>/spec.md`                 | mattpocock/skills |
+| Slice into tickets         | `/to-tickets` → `tickets/<feature>/issues/NN-*.md`       | mattpocock/skills |
+| Build one ticket           | `/implement` — see Overrides below                       | mattpocock/skills |
+| Find out why it broke      | `/diagnosing-bugs`                                       | mattpocock/skills |
+| Review the diff            | `/code-review` (Standards axis + Spec axis)              | mattpocock/skills |
+| Record a decision / a term | `/domain-modeling` → `CONTEXT.md`, `docs/adr/`           | mattpocock/skills |
+| Keep it lean               | `ponytail` (always on), `/ponytail-review` at self-check | ponytail plugin   |
+| Try it as a stranger       | `/naive-test` (once there is a UI)                       | naive-user plugin |
 
 **Why Matt Pocock as the spine:** tickets are files. One ticket = one subagent dispatch =
 one unit the tracker, the triage labels, and the worktree rule all agree on.
-**Why borrow from superpowers:** it has the stronger start and finish —
-`subagent-driven-development`, `verification-before-completion`, and
-`finishing-a-development-branch` have no Matt Pocock equivalent.
-**Not used:** superpowers' `brainstorming` / `writing-plans` spec-and-plan flow — a
-second way to write a spec — and its `executing-plans`. If you reach for one of those,
-stop and use the row above instead.
 
-Installation: `npx skills add mattpocock/skills` after scaffold (lockfile
-`skills-lock.json`); `superpowers` and `ponytail` are
-user-level plugins; `naive-user` is installed once there is a UI.
+**Superpowers is not used.** Its `subagent-driven-development`,
+`verification-before-completion` and `finishing-a-development-branch` each restate a rule
+this repo already owns — one subagent per ticket (`AGENTS.md` → _Who does the work_), show
+the test output before claiming done (step 5), and squash-merge / delete the branch /
+update `docs/status.md` (step 9 and `docs/conventions/git.md`). Two homes for one fact is
+the thing the one-home-per-fact rule exists to stop, so the rules stay and the skill
+references go. Its `brainstorming` / `writing-plans` / `executing-plans` chain is a second
+way to write a spec, and `using-superpowers` orders brainstorming before planning, which
+collides with the grilling step. Nothing is uninstalled — it stays available as a plugin;
+depending on it again is an ADR, not a preference.
+
+**Also not used:** `/grill-me`, which is `/grill-with-docs` without the glossary and ADR
+writing. `/domain-modeling` already runs inside `/grill-with-docs` — the row above is for
+recording a single term or decision outside a grilling session, not for running it twice.
+
+### Overrides — where this repo departs from the skills
+
+A skill is instructions, not law; `AGENTS.md` wins. Two known conflicts, both in
+`implement/SKILL.md`:
+
+- **It says "Commit your work to the current branch."** We do not. `AGENTS.md` →
+  _Commit discipline_: never commit unprompted. The implementer reports; the human asks
+  for the commit.
+- **It says "Use /tdd where possible, at pre-agreed seams."** We do not mandate TDD.
+  Write the tests the ticket needs, in whatever order suits the work; step 5 still
+  requires them green with the output shown.
+
+Installation: `npx skills add mattpocock/skills` (lockfile `skills-lock.json`) — install
+the whole set, not a subset, or a step in the chain will be missing when you reach it.
+`ponytail` is a user-level plugin; `naive-user` is installed once there is a UI.
 
 **Repo-local skills to add once code exists** (`.claude/skills/`, modelled on techgarden):
 
@@ -158,10 +178,10 @@ Until then, the five skills are run by hand in the order shown. Lane selection
    discovers that must hold ("X must never happen") is appended to `spec.md` under
    `## Discovered`, not left in its report. **Triggered reviewer**: a ticket that touches
    auth, tenancy, migrations, or CI gets a second-opinion review subagent automatically.
-5. **Self-check** before the PR: `/ponytail-review`,
-   `superpowers:verification-before-completion`, and **reconcile the living docs** —
-   `docs/design/hld.md` / `lld.md` if a table, route, flow, or component changed;
-   `PRD.md` if what v1 _is_ changed; `docs/status.md` if anything real changed.
+5. **Self-check** before the PR: `/ponytail-review`, run typecheck / lint / tests and show
+   the output, and **reconcile the living docs** — `docs/design/hld.md` / `lld.md` if a
+   table, route, flow, or component changed; `PRD.md` if what v1 _is_ changed;
+   `docs/status.md` if anything real changed.
 6. Open the PR. **Validate loop**: `/code-review` → fix → re-review, at most **2**
    rounds. Anything still open goes to Gate 3 as _needs waiver_, never a third round.
    **Naive-user run** (once there is a UI): the naive-user agent opens the running app

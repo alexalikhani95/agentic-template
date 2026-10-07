@@ -2,7 +2,6 @@
 
 A starting point for a project built with coding agents. It carries the **way of working** — the dev flow, the lanes, the doc structure, the gates, the git rules — and nothing about any product, domain, or stack. Those get decided per project, by the flow itself.
 
-Extracted from `home-manager` and `fish-tank-manager`, which were built this way.
 
 ## What's in it
 

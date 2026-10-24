@@ -2,7 +2,6 @@
 
 A starting point for a project built with coding agents. It carries the **way of working** — the dev flow, the lanes, the doc structure, the gates, the git rules — and nothing about any product, domain, or stack. Those get decided per project, by the flow itself.
 
-
 ## What's in it
 
 | Path                             | What it is                                                                                   |
@@ -16,7 +15,8 @@ A starting point for a project built with coding agents. It carries the **way of
 | `docs/status.md`                 | The single status surface — what is actually live                                            |
 | `scripts/context-check.mjs`      | Hook that measures live context every prompt and says when to hand off (200k threshold)      |
 | `scripts/check-status-claims.sh` | CI gate: fails if a status claim appears outside `docs/status.md`                            |
-| `.claude/settings.json`          | Registers the context-check hook                                                             |
+| `.claude/settings.json`          | Registers the context-check hook for Claude                                                  |
+| `.codex/hooks.json`              | Registers the same hook for Codex                                                            |
 | `.githooks/pre-commit`           | Prettier check on staged files                                                               |
 
 Deliberately **not** included: `PRD.md`, `PLAN.md`, `CONTEXT.md`, `docs/design/hld.md`, `docs/design/lld.md`. They are written per project by the dev flow, and `AGENTS.md`'s directory map marks them `(to write)`. An empty stub claiming to describe a product is worse than a missing file.
